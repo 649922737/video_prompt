@@ -1,0 +1,71 @@
+import requests
+import json
+import os
+
+class JimengAgent:
+    def __init__(self, api_key, endpoint):
+        self.api_key = api_key
+        self.endpoint = endpoint
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+
+    def _read_file(self, filename, default=""):
+        if os.path.exists(filename):
+            with open(filename, 'r', encoding='utf-8') as f:
+                return f.read() if filename.endswith('.txt') else json.load(f)
+        return default
+
+    def generate(self, user_query, img_num=0, vid_num=0):
+        # 1. 加载配置和知识库
+        config = self._read_file('agent_skills.json', {"role": "AI Assistant", "syntax_rules": []})
+        examples = self._read_file('examples.txt', "")
+        
+        # 2. 自动构建素材标签
+        asset_tags = [f"@图片{i+1}" for i in range(img_num)] + [f"@视频{i+1}" for i in range(vid_num)]
+        asset_str = "，".join(asset_tags) if asset_tags else "纯文字，无参考素材"
+
+        # 3. 组装 System Prompt (RAG 核心)
+        system_msg = f"""
+        # Role: {config['role']}
+        # Rules:
+        {chr(10).join(config['syntax_rules'])}
+        
+        # RAG Reference Examples:
+        {examples}
+        
+        # Current Task:
+        用户描述: {user_query}
+        素材引用: {asset_str}
+        请输出符合 Seedance 2.0 语法的详细分镜提示词。
+        """
+
+        # 4. 发送请求
+        payload = {
+            "model": "gemini-3-pro", # 确认您的 endpoint 支持的模型
+            "messages": [
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": user_query}
+            ],
+            "temperature": 0.3
+        }
+
+        try:
+            response = requests.post(self.endpoint, headers=self.headers, json=payload)
+            response.raise_for_status()
+            return response.json()['choices'][0]['message']['content']
+        except Exception as e:
+            return f"执行失败: {str(e)}"
+
+# --- 使用方式 ---
+if __name__ == "__main__":
+    MY_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiQUktMTc3MDgxODg4MTEwOCIsInJvbGVzIjpbIjM1Il0sInVzZXJfaWQiOjEzLCJ1c2VybmFtZSI6IndlbnRhb19zb25nIiwicm9sZV9uYW1lcyI6WyJST1AtYWllbmRwb2ludC1Vc2VyIl0sInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3Nzg1OTQ4ODMsImp0aSI6IjE0N2NjMjhjLTA3NTMtMTFmMS1hOTM2LWU2NjZkYTc3Y2FmZiIsInZlcnNpb24iOiIyMDI0LTExLTAxIn0.HShlRuCgxgF8GZAmoQw64qbqI4GCJ5iv4nST8xTuV_o"
+    MY_URL = "https://api.rdsec.trendmicro.com/prod/aiendpoint/v1/chat/completions"
+    
+    agent = JimengAgent(MY_KEY, MY_URL)
+    
+    # 测试场景：带一张角色图和一段动作视频的修改需求
+    result = agent.generate("把视频里的人换成我这张照片里的机甲战士，做同样的后空翻动作", img_num=1, vid_num=1)
+    print("--- 生成的分镜提示词 ---")
+    print(result)
