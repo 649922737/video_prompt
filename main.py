@@ -59,8 +59,8 @@ class JimengAgent:
 
 # --- 修改后的 Main 函数 ---
 if __name__ == "__main__":
-    MY_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiQUktMTc3MDgxODg4MTEwOCIsInJvbGVzIjpbIjM1Il0sInVzZXJfaWQiOjEzLCJ1c2VybmFtZSI6IndlbnRhb19zb25nIiwicm9sZV9uYW1lcyI6WyJST1AtYWllbmRwb2ludC1Vc2VyIl0sInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3Nzg1OTQ4ODMsImp0aSI6IjE0N2NjMjhjLTA3NTMtMTFmMS1hOTM2LWU2NjZkYTc3Y2FmZiIsInZlcnNpb24iOiIyMDI0LTExLTAxIn0.HShlRuCgxgF8GZAmoQw64qbqI4GCJ5iv4nST8xTuV_o"
-    MY_URL = "https://api.rdsec.trendmicro.com/prod/aiendpoint/v1/chat/completions"
+    MY_KEY = ""
+    MY_URL = ""
     
     agent = JimengAgent(MY_KEY, MY_URL)
     
